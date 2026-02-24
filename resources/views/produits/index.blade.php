@@ -9,8 +9,9 @@
     .product-card:hover { transform: translateY(-10px); border-color: var(--primary); }
     .product-card img { width: 100%; height: 110px; object-fit: contain; margin-bottom: 15px; }
     .price-tag { background: #F4F7FE; color: var(--primary); border-radius: 12px; font-weight: 800; padding: 5px 15px; display: inline-block; }
-    .btn-new { background: var(--dark-text); color: white; border-radius: 18px; padding: 12px 25px; font-weight: 700; border: none; transition: 0.3s; }
-    .btn-new:hover { background: #000; transform: scale(1.05); }
+    .btn-new { background: var(--dark-text); color: white; border-radius: 18px; padding: 12px 25px; font-weight: 700; border: none; transition: 0.3s; display: inline-flex; align-items: center; text-decoration: none; }
+    .btn-new:hover { background: #000; transform: scale(1.05); color: white; }
+    .btn-stats { background: var(--primary); color: white; } /* Couleur bleue pour les stats */
     .btn-circle { width: 35px; height: 35px; border-radius: 12px; border: none; display: flex; align-items: center; justify-content: center; z-index: 30; }
     .action-btns-wrapper { position: absolute; top: 15px; width: calc(100% - 30px); display: flex; justify-content: space-between; opacity: 0; transition: 0.3s; padding: 0 10px; }
     .product-card:hover .action-btns-wrapper { opacity: 1; }
@@ -20,6 +21,7 @@
     <div class="cat-container">
         <button class="cat-pill active filter-btn" data-filter="all">✨ Tout</button>
         <button class="cat-pill filter-btn" data-filter="burgers">🍔 Burgers</button>
+        <button class="cat-pill filter-btn" data-filter="pizza">🍕 Pizza</button>
         <button class="cat-pill filter-btn" data-filter="accompagnements">🍟 Accompagnements</button>
         <button class="cat-pill filter-btn" data-filter="tacos_chawarma">🌮 Tacos & Chawarma</button>
         <button class="cat-pill filter-btn" data-filter="boissons">🥤 Boissons</button>
@@ -27,9 +29,14 @@
         <button class="cat-pill filter-btn" data-filter="menus">🍱 Menus combinés</button>
     </div>
     
-    <button type="button" class="btn-new shadow-lg" data-bs-toggle="modal" data-bs-target="#modalAjout">
-        <i class="fa-solid fa-plus me-2"></i>Nouveau
-    </button>
+    <div class="d-flex gap-2">
+        <a href="{{ route('stats.index') }}" class="btn-new btn-stats shadow-lg">
+            <i class="fa-solid fa-chart-line me-2"></i>Stats
+        </a>
+        <button type="button" class="btn-new shadow-lg" data-bs-toggle="modal" data-bs-target="#modalAjout">
+            <i class="fa-solid fa-plus me-2"></i>Nouveau
+        </button>
+    </div>
 </div>
 
 <div class="row row-cols-1 row-cols-md-3 row-cols-xl-4 g-4" id="grid-produits">
@@ -69,6 +76,7 @@
                         <option value="accompagnements">Accompagnements</option>
                         <option value="tacos_chawarma">Tacos & Chawarma</option>
                         <option value="boissons">Boissons</option>
+                        <option value="pizza">Pizza</option>
                         <option value="desserts">Desserts</option>
                         <option value="menus">Menus combinés</option>
                     </select>
@@ -96,6 +104,7 @@
                         <option value="accompagnements">Accompagnements</option>
                         <option value="tacos_chawarma">Tacos & Chawarma</option>
                         <option value="boissons">Boissons</option>
+                        <option value="pizza">Pizza</option>
                         <option value="desserts">Desserts</option>
                         <option value="menus">Menus combinés</option>
                     </select>
@@ -121,7 +130,7 @@
         });
     });
 
-    // Recherche dynamique (lié à l'input "main-search" du layout)
+    // Recherche dynamique
     const posSearch = document.getElementById('main-search');
     if(posSearch) {
         posSearch.addEventListener('input', (e) => {

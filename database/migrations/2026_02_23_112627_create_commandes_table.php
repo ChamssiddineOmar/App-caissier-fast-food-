@@ -11,13 +11,22 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::create('ligne_commandes', function (Blueprint $table) {
+    // Table principale des ventes
+    Schema::create('commandes', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+        $table->string('caissier');
+        $table->string('statut')->default('payé'); // payé, annulé
+        $table->timestamps(); // Cela créera created_at (la date et l'heure de vente)
+    });
+
+    // Table de détail (pour savoir ce qu'il y avait dans la commande)
+    Schema::create('commande_produit', function (Blueprint $table) {
         $table->id();
         $table->foreignId('commande_id')->constrained()->onDelete('cascade');
         $table->string('nom_produit');
         $table->integer('quantite');
         $table->decimal('prix_unitaire', 10, 2);
-        $table->string('categorie'); // Très important pour les stats par catégorie (Pizza vs Burger)
         $table->timestamps();
     });
 }
@@ -27,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ligne_commandes');
+        Schema::dropIfExists('commandes');
     }
 };

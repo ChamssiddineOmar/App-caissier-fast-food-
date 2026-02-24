@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\CommandeController;
+use App\Http\Controllers\StatistiqueController;
 
 // La page d'accueil affiche maintenant notre interface de caisse
 Route::get('/', [ProduitController::class, 'index'])->name('accueil');
@@ -15,3 +16,6 @@ Route::post('/commandes', [CommandeController::class, 'store'])->name('commandes
 Route::delete('/produits/{id}', [ProduitController::class, 'destroy'])->name('produits.destroy');
 
 Route::put('/produits/{id}', [ProduitController::class, 'update'])->name('produits.update');
+
+Route::get('/stats', [StatistiqueController::class, 'index'])->name('stats.index');
+

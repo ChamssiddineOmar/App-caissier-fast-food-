@@ -4,51 +4,45 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Commande;
-use App\Models\LigneCommande;
+use App\Models\CommandeProduit;
 use Illuminate\Support\Facades\DB;
 
 class CommandeController extends Controller
 {
     public function store(Request $request)
     {
-        // 1. Validation de base
+        // Validation des données entrantes
         $request->validate([
             'total' => 'required|numeric',
+            'caissier' => 'required|string',
             'panier' => 'required|array'
         ]);
 
         try {
-            // 2. Utilisation d'une Transaction pour éviter les erreurs partielles
+            // Utilisation d'une transaction pour la sécurité des données
             return DB::transaction(function () use ($request) {
                 
-                // Création de la commande principale
+                // 1. Création de la commande
                 $commande = Commande::create([
                     'total' => $request->total,
-                    'caissier' => 'OMAR', // On pourra lier cela à l'utilisateur connecté plus tard
+                    'caissier' => $request->caissier,
+                    'statut' => 'payé'
                 ]);
 
-                // Création des lignes de détails
+                // 2. Enregistrement des produits détaillés
                 foreach ($request->panier as $item) {
-                    LigneCommande::create([
+                    CommandeProduit::create([
                         'commande_id' => $commande->id,
-                        'produit_nom' => $item['nom'],
-                        'quantite'    => $item['quantite'],
-                        'prix_unitaire' => $item['prix'],
+                        'nom_produit' => $item['nom'],
+                        'quantite' => $item['qte'],
+                        'prix_unitaire' => $item['prix']
                     ]);
                 }
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Commande enregistrée avec succès !',
-                    'commande_id' => $commande->id
-                ], 201);
+                return response()->json(['message' => 'Vente enregistrée avec succès'], 201);
             });
-
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Erreur lors de l\'enregistrement : ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Erreur: ' . $e->getMessage()], 500);
         }
     }
 }
