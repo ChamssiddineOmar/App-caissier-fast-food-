@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastFood Elite POS</title>
+    <title>FastFood Elite </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -49,6 +49,18 @@
             transition: 0.3s;
         }
 
+        /* Style de la note dans le panier */
+        .item-note-display {
+            font-size: 11px;
+            color: var(--primary);
+            background: #f0f2ff;
+            padding: 4px 8px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-weight: 600;
+            border-left: 3px solid var(--primary);
+        }
+
         .ticket-footer { 
             padding: 25px; background: white; 
             border-radius: 30px 30px 0 0;
@@ -86,11 +98,12 @@
         @media print {
             @page { size: 80mm auto; margin: 0; }
             .no-print, .main-content, .action-grid, .navbar-pos, .btn-pay-container { display: none !important; }
-            body { background: white !important; font-size: 12px; }
+            body { background: white !important; font-size: 12px; color: black; }
             .sidebar-ticket { width: 100%; height: auto; box-shadow: none; border: none; padding: 10px; }
             .ticket-header { text-align: center; padding: 10px 0; border-bottom: 2px dashed #000; }
             .ticket-header h3 { font-size: 20px; text-transform: uppercase; margin-bottom: 5px; }
-            .cart-item { border: none; border-bottom: 1px solid #eee; border-radius: 0; padding: 10px 0; margin: 0; display: flex; justify-content: space-between; }
+            .cart-item { border: none; border-bottom: 1px solid #eee; border-radius: 0; padding: 8px 0; margin: 0; display: block; }
+            .item-note-display { background: none !important; border-left: 2px solid black !important; color: black !important; padding-left: 5px; margin-top: 2px; }
             .ticket-footer { box-shadow: none; padding: 15px 0; border-top: 2px dashed #000; text-align: center; }
             .receipt-thank-you { margin-top: 20px; font-weight: bold; font-size: 11px; text-align: center; line-height: 1.5; }
         }
@@ -107,9 +120,9 @@
                         <i class="fa-solid fa-user-circle me-2 text-primary"></i>
                         <select id="select-caissier" onchange="changerCaissier()">
                             <option value="Omar">Omar</option>
-                            <option value="Awa">Awa</option>
-                            <option value="Moussa">Moussa</option>
-                            <option value="Fatou">Fatou</option>
+                            <option value="Awa">Moindzioi</option>
+                            <option value="Moussa">Chamssiddine</option>
+                            <option value="Fatou">Aboudou</option>
                         </select>
                     </div>
 
@@ -117,8 +130,7 @@
                     <div id="print-date" class="small fw-bold text-muted"></div>
                 </div>
 
-                <div class="ticket-items" id="cart-table">
-                    </div>
+                <div class="ticket-items" id="cart-table"></div>
 
                 <div class="ticket-footer">
                     <div class="d-flex justify-content-between mb-3">
@@ -133,9 +145,9 @@
                     </div>
 
                     <div class="action-grid no-print">
-                        <button class="btn btn-action btn-cancel" onclick="viderPanier()"><i class="fa-solid fa-xmark"></i></button>
-                        <button class="btn btn-action btn-save" onclick="sauvegarderCommande()"><i class="fa-solid fa-bookmark"></i></button>
-                        <button class="btn btn-action btn-notes" onclick="ajouterNote()"><i class="fa-solid fa-comment-dots"></i></button>
+                        <button class="btn btn-action btn-cancel" title="Vider" onclick="viderPanier()"><i class="fa-solid fa-xmark"></i></button>
+                        <button class="btn btn-action btn-save" title="En attente" onclick="sauvegarderCommande()"><i class="fa-solid fa-bookmark"></i></button>
+                        <button class="btn btn-action btn-notes" title="Ajouter une note" onclick="ajouterNote()"><i class="fa-solid fa-comment-dots"></i></button>
                     </div>
 
                     <div class="receipt-thank-you d-none d-print-block">
@@ -169,7 +181,7 @@
 
     <script>
         let panier = [];
-        let noteCommande = "";
+        let noteCommandeGlobal = ""; // Stocke la note pour toute la commande
 
         function changerCaissier() {
             const nom = document.getElementById('select-caissier').value;
@@ -186,7 +198,6 @@
             majAffichage();
         }
 
-        // Fonction pour supprimer un seul article ou baisser sa quantité
         function supprimerArticle(index) {
             if (panier[index].qte > 1) {
                 panier[index].qte--;
@@ -211,89 +222,110 @@
                 panier.forEach((p, index) => {
                     total += p.prix * p.qte;
                     html += `
-                        <div class="cart-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-800" style="font-size:14px">${p.nom}</div>
-                                <small class="text-muted">${p.qte} x ${p.prix} F</small>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="fw-800 text-primary me-2">${p.prix * p.qte} F</div>
-                                <button onclick="supprimerArticle(${index})" class="btn btn-sm text-danger no-print p-0">
-                                    <i class="fa-solid fa-circle-minus"></i>
-                                </button>
+                        <div class="cart-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-800" style="font-size:14px">${p.nom}</div>
+                                    <small class="text-muted">${p.qte} x ${p.prix} F</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="fw-800 text-primary me-2">${p.prix * p.qte} F</div>
+                                    <button onclick="supprimerArticle(${index})" class="btn btn-sm text-danger no-print p-0">
+                                        <i class="fa-solid fa-circle-minus"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>`;
                 });
+
+                // AJOUT DE LA NOTE DANS LE PANIER SI ELLE EXISTE
+                if(noteCommandeGlobal) {
+                    html += `<div class="item-note-display">
+                                <i class="fa-solid fa-comment-dots me-1"></i> CUISINE : ${noteCommandeGlobal}
+                             </div>`;
+                }
+
                 container.innerHTML = html;
             }
             document.getElementById('total-display').innerText = total + " F";
         }
 
         function viderPanier() { 
-            if(confirm("Annuler la commande ?")) { panier = []; majAffichage(); } 
+            if(confirm("Annuler la commande ?")) { 
+                panier = []; 
+                noteCommandeGlobal = ""; // On vide la note aussi
+                document.getElementById('order-note-badge').classList.add('d-none');
+                majAffichage(); 
+            } 
         }
 
         function validerPaiement() {
-    if (panier.length === 0) {
-        alert("Le panier est vide !");
-        return;
-    }
+            if (panier.length === 0) {
+                alert("Le panier est vide !");
+                return;
+            }
 
-    // On prépare l'objet JSON à envoyer au serveur
-    const commandeData = {
-        total: parseFloat(document.getElementById('total-display').innerText.replace(' F', '').replace(' ', '')),
-        caissier: document.getElementById('select-caissier').value,
-        panier: panier,
-        _token: '{{ csrf_token() }}' // Indispensable pour la sécurité Laravel
-    };
+            const commandeData = {
+                total: parseFloat(document.getElementById('total-display').innerText.replace(' F', '').replace(' ', '')),
+                caissier: document.getElementById('select-caissier').value,
+                panier: panier,
+                note: noteCommandeGlobal, // On envoie la note au serveur
+                _token: '{{ csrf_token() }}'
+            };
 
-    // On désactive le bouton pour éviter les doubles clics
-    const btnPayer = event.currentTarget;
-    btnPayer.disabled = true;
+            const btnPayer = event.currentTarget;
+            btnPayer.disabled = true;
 
-    fetch('/commandes', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify(commandeData)
-    })
-    .then(response => {
-        if (response.ok) {
-            // Si la base de données a bien reçu l'info, on imprime
-            const now = new Date();
-            document.getElementById('print-date').innerText = now.toLocaleDateString('fr-FR') + " " + now.toLocaleTimeString('fr-FR');
-            
-            window.print();
+            fetch('/commandes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(commandeData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    const now = new Date();
+                    document.getElementById('print-date').innerText = now.toLocaleDateString('fr-FR') + " " + now.toLocaleTimeString('fr-FR');
+                    
+                    window.print();
 
-            // On vide tout pour le client suivant
-            panier = [];
-            majAffichage();
-            alert("Vente validée et enregistrée en base !");
-        } else {
-            alert("Erreur lors de l'enregistrement. Vérifie ta base de données.");
+                    // Reset complet
+                    panier = [];
+                    noteCommandeGlobal = "";
+                    document.getElementById('order-note-badge').classList.add('d-none');
+                    majAffichage();
+                    alert("Vente validée !");
+                } else {
+                    alert("Erreur lors de l'enregistrement.");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert("Problème de connexion.");
+            })
+            .finally(() => {
+                btnPayer.disabled = false;
+            });
         }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        alert("Problème de connexion avec le serveur.");
-    })
-    .finally(() => {
-        btnPayer.disabled = false;
-    });
-}
 
         function sauvegarderCommande() { alert("Commande mise en attente"); }
         
+        // FONCTION NOTE MISE À JOUR
         function ajouterNote() { 
-            noteCommande = prompt("Note spéciale (ex: sans oignons) :"); 
+            let n = prompt("Note cuisine (ex: Sans piment, Bien cuit) :", noteCommandeGlobal); 
             const badge = document.getElementById('order-note-badge');
-            if(noteCommande) {
-                badge.classList.remove('d-none');
-                badge.innerText = "Note : " + noteCommande;
-            } else {
-                badge.classList.add('d-none');
+            
+            if(n !== null) {
+                noteCommandeGlobal = n;
+                if(noteCommandeGlobal) {
+                    badge.classList.remove('d-none');
+                    badge.innerText = "Note : " + noteCommandeGlobal;
+                } else {
+                    badge.classList.add('d-none');
+                }
+                majAffichage(); // On rafraîchit pour montrer la note dans le panier
             }
         }
     </script>
