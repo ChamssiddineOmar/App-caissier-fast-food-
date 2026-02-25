@@ -63,6 +63,14 @@
         .btn-save { background: #E9EDFF; color: var(--primary); }
         .btn-notes { background: #F4F7FE; color: var(--dark-text); }
 
+        /* Notification Style */
+        .toast-container { z-index: 10000; }
+        .custom-toast { 
+            border-radius: 20px !important; 
+            border: none !important; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        }
+
         .navbar-pos { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
         .search-bar { 
             background: white; border: none; border-radius: 30px; 
@@ -80,7 +88,7 @@
                 position: absolute; left: 0; top: 0; width: 80mm; 
                 box-shadow: none !important; border: none !important;
             }
-            .no-print, .btn-pay-container, .action-grid, .admin-section, select, .fa-circle-minus {
+            .no-print, .btn-pay-container, .action-grid, .admin-section, select, .fa-circle-minus, .toast-container {
                 display: none !important;
             }
             .ticket-items { overflow: visible; }
@@ -88,6 +96,18 @@
     </style>
 </head>
 <body>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="paymentToast" class="toast custom-toast bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex p-3">
+                <div class="toast-body fw-bold">
+                    <i class="fa-solid fa-circle-check me-2"></i> Paiement validé et enregistré !
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid p-0">
         <div class="row g-0">
             <div class="col-md-3 sidebar-ticket">
@@ -143,13 +163,11 @@
                 <div class="navbar-pos">
                     <div>
                         <h4 class="fw-800 mb-0">
-                            {{-- Titre dynamique selon la page --}}
                             @if(Request::is('admin*')) Tableau de Bord @else Menu Digital @endif
                         </h4>
                         <span id="order-note-badge" class="badge rounded-pill bg-warning text-dark d-none mt-1">Note active</span>
                     </div>
 
-                    {{-- On masque la recherche du caissier si on est dans l'admin --}}
                     @if(!Request::is('admin*'))
                     <div class="position-relative">
                         <i class="fa-solid fa-magnifying-glass position-absolute" style="left: 20px; top: 18px; color: var(--light-text);"></i>
@@ -243,8 +261,16 @@
                 });
 
                 if (response.ok) {
+                    // --- AFFICHAGE DE LA NOTIFICATION ---
+                    const toastEl = document.getElementById('paymentToast');
+                    const toast = new bootstrap.Toast(toastEl);
+                    toast.show();
+
+                    // --- IMPRESSION ---
                     document.getElementById('print-date').innerText = new Date().toLocaleString();
                     window.print();
+                    
+                    // --- RESET ---
                     panier = [];
                     noteCommandeGlobal = "";
                     majAffichage();
@@ -259,27 +285,13 @@
 
         function filtrerMenu() {
             let input = document.getElementById('menuSearch');
-            if(!input) return; // Sécurité si on est dans l'admin
-            
+            if(!input) return;
             let filterText = input.value.toLowerCase().trim();
             let items = document.getElementsByClassName('product-item');
-
             for (let i = 0; i < items.length; i++) {
-                let item = items[i];
-                let text = item.innerText.toLowerCase();
-                
-                let activeBtn = document.querySelector('.cat-pill.active');
-                let activeCat = activeBtn ? activeBtn.dataset.filter : 'all';
-                let itemCat = item.dataset.category;
-                
-                let matchSearch = text.includes(filterText);
-                let matchCat = (activeCat === 'all' || itemCat === activeCat);
-
-                if (matchSearch && matchCat) {
-                    item.style.setProperty("display", "block", "important");
-                } else {
-                    item.style.setProperty("display", "none", "important");
-                }
+                let text = items[i].innerText.toLowerCase();
+                if (text.includes(filterText)) items[i].style.setProperty("display", "block", "important");
+                else items[i].style.setProperty("display", "none", "important");
             }
         }
 

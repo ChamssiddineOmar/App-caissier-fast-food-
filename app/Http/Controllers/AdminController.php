@@ -4,18 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Produit;
+use App\Models\Commande; // Ajouté pour les stats
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; // Ajouté pour les requêtes complexes
 
 class AdminController extends Controller
 {
-    // Affiche la liste des produits avec les options de gestion (Nouveau, Modifier, Supprimer)
+    // --- PARTIE STATISTIQUES (NOUVEAU) ---
+  public function stats()
+{
+    $ca_du_jour = Commande::whereDate('created_at', today())->sum('total');
+    
+    // On récupère les dernières commandes avec leurs produits
+    $dernieres_ventes = Commande::orderBy('created_at', 'desc')->take(10)->get();
+
+    return view('admin.stats', compact('ca_du_jour', 'dernieres_ventes'));
+}
+
+    // --- GESTION DES PRODUITS ---
+
     public function index()
     {
         $produits = Produit::all(); 
         return view('admin.produits', compact('produits'));
     }
 
-    // Gère l'ajout d'un nouveau produit (déplacé depuis ProduitController pour la sécurité)
     public function store(Request $request)
     {
         $request->validate([
@@ -36,7 +49,6 @@ class AdminController extends Controller
         return redirect()->route('admin.produits')->with('success', 'Produit ajouté avec succès !');
     }
 
-    // Gère la mise à jour d'un produit (Changement de prix, nom, etc.)
     public function update(Request $request, $id)
     {
         $produit = Produit::findOrFail($id);
@@ -50,7 +62,6 @@ class AdminController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
-            // On supprime l'ancienne image si elle existe
             if ($produit->image) {
                 Storage::disk('public')->delete($produit->image);
             }
@@ -62,7 +73,6 @@ class AdminController extends Controller
         return redirect()->route('admin.produits')->with('success', 'Produit mis à jour !');
     }
 
-    // Supprime définitivement un produit
     public function destroy($id)
     {
         $produit = Produit::findOrFail($id);

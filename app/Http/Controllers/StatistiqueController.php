@@ -4,20 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Commande;
+use App\Models\CommandeProduit; // On utilise ton modèle
 use Illuminate\Support\Facades\DB;
 
 class StatistiqueController extends Controller
 {
     public function index()
     {
-        // 1. CA Aujourd'hui (Fonctionne déjà)
         $ca_du_jour = Commande::whereDate('created_at', today())->sum('total');
+        
+        $dernieres_ventes = Commande::whereDate('created_at', today())
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        // 2. On crée des collections vides pour éviter que la vue ne plante
-        // Nous les remplirons quand tu auras une table "commande_items"
-        $stats_categories = collect(); 
-        $top_produits = collect();
+        return view('admin.stats', compact('ca_du_jour', 'dernieres_ventes'));
+    }
 
-        return view('admin.stats', compact('ca_du_jour', 'stats_categories', 'top_produits'));
+    public function details($id)
+    {
+        try {
+            // On cherche les produits liés à la commande dans la table 'commande_produit'
+            $details = CommandeProduit::where('commande_id', $id)->get();
+            
+            return response()->json($details);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
