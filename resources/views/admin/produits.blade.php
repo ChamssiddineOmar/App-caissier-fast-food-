@@ -9,15 +9,18 @@
         </div>
     @endif
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
         <div class="admin-nav">
             <h2 class="fw-800 mb-3" style="color: var(--dark-text);">Tableau de Bord du Patron</h2>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 <a href="{{ route('admin.stats') }}" class="btn btn-white shadow-sm rounded-pill px-4 fw-bold text-primary border bg-white">
                     <i class="fa-solid fa-chart-line me-2"></i> Statistiques
                 </a>
                 <a href="{{ route('admin.produits') }}" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-utensils me-2"></i> Gérer le Menu
+                </a>
+                <a href="{{ route('accueil') }}" class="btn btn-outline-dark shadow-sm rounded-pill px-4 fw-bold">
+                    <i class="fa-solid fa-cash-register me-2"></i> Interface Caisse
                 </a>
             </div>
         </div>
@@ -29,12 +32,13 @@
 
     <hr class="mb-5 opacity-25">
 
-    <div class="row mb-4">
-        <div class="col-md-5">
+    <div class="row mb-5 g-4">
+        <div class="col-md-12"> 
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-magnifying-glass me-2"></i>Rechercher un plat</h5>
             <div class="position-relative">
                 <i class="fa-solid fa-magnifying-glass position-absolute" style="left: 15px; top: 12px; color: var(--light-text);"></i>
                 <input type="text" id="adminSearch" class="form-control border-0 shadow-sm ps-5 py-2 rounded-pill" 
-                       placeholder="Rechercher un plat ou une catégorie..." onkeyup="filtrerAdmin()">
+                       placeholder="Plat ou catégorie..." onkeyup="filtrerAdmin()">
             </div>
         </div>
     </div>
@@ -47,12 +51,13 @@
                         <th class="ps-4 py-3">Produit</th>
                         <th>Catégorie</th>
                         <th>Prix Actuel</th>
+                        <th>Disponibilité</th>
                         <th class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($produits as $produit)
-                    <tr>
+                    <tr class="{{ !$produit->en_stock ? 'bg-light opacity-75' : '' }}">
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
                                 <img src="{{ $produit->image ? asset('storage/'.$produit->image) : 'https://cdn-icons-png.flaticon.com/512/1161/1161695.png' }}" 
@@ -62,6 +67,15 @@
                         </td>
                         <td><span class="badge bg-light text-dark rounded-pill px-3">{{ ucfirst($produit->categorie) }}</span></td>
                         <td><span class="fw-800 text-primary">{{ number_format($produit->prix, 0, ',', ' ') }} F</span></td>
+                        <td>
+                            <form action="{{ route('admin.produits.stock', $produit->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-sm rounded-pill px-3 fw-bold {{ $produit->en_stock ? 'btn-success' : 'btn-danger' }}">
+                                    <i class="fa-solid {{ $produit->en_stock ? 'fa-check' : 'fa-xmark' }} me-1"></i>
+                                    {{ $produit->en_stock ? 'En Stock' : 'Rupture' }}
+                                </button>
+                            </form>
+                        </td>
                         <td class="text-end pe-4">
                             <button class="btn btn-sm btn-outline-primary rounded-3 me-2 fw-bold" 
                                     onclick='ouvrirEditeur(@json($produit))'>
@@ -83,81 +97,80 @@
 </div>
 
 <div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 30px; padding: 20px;">
-            <div class="modal-header border-0 pb-0">
-                <h4 class="fw-800">Nouveau Produit</h4>
+    <div class="modal-dialog">
+        <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0">
+            @csrf
+            <div class="modal-header border-0">
+                <h5 class="fw-bold">Nouveau Produit</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body">
-                    <input type="text" name="nom" class="form-control mb-3 border-0 bg-light p-3 rounded-4" placeholder="Nom du plat" required>
-                    <input type="number" name="prix" class="form-control mb-3 border-0 bg-light p-3 rounded-4" placeholder="Prix" required>
-                    <select name="categorie" class="form-select mb-3 border-0 bg-light p-3 rounded-4" required>
-                        <option value="burgers">Burgers</option>
-                        <option value="pizza">Pizza</option>
-                        <option value="accompagnements">Accompagnements</option>
-                        <option value="boissons">Boissons</option>
-                    </select>
-                    <input type="file" name="image" class="form-control border-0 bg-light p-3 rounded-4">
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" style="border-radius:15px;">AJOUTER AU MENU</button>
-                </div>
-            </form>
-        </div>
+            <div class="modal-body">
+                <input type="text" name="nom" class="form-control rounded-3 mb-3" placeholder="Nom du plat" required>
+                <input type="number" name="prix" class="form-control rounded-3 mb-3" placeholder="Prix (F)" required>
+                <select name="categorie" class="form-control rounded-3 mb-3" required>
+                    <option value="burgers">🍔 Burgers</option>
+                    <option value="pizza">🍕 Pizza</option>
+                    <option value="accompagnements">🍟 Accompagnements</option>
+                    <option value="tacos_chawarma">🌮 Tacos & Chawarma</option>
+                    <option value="boissons">🥤 Boissons</option>
+                    <option value="desserts">🍦 Desserts</option>
+                </select>
+                <label class="small text-muted mb-1">Image du produit</label>
+                <input type="file" name="image" class="form-control rounded-3">
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold py-2">Enregistrer le produit</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <div class="modal fade" id="modalModifier" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 30px; padding: 20px;">
-            <div class="modal-header border-0 pb-0">
-                <h4 class="fw-800">Modifier Produit</h4>
+    <div class="modal-dialog">
+        <form id="formModifier" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0">
+            @csrf @method('PUT')
+            <div class="modal-header border-0">
+                <h5 class="fw-bold">Modifier le produit</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formModifier" method="POST" enctype="multipart/form-data">
-                @csrf @method('PUT')
-                <div class="modal-body">
-                    <input type="text" name="nom" id="edit_nom" class="form-control mb-3 border-0 bg-light p-3 rounded-4" required>
-                    <input type="number" name="prix" id="edit_prix" class="form-control mb-3 border-0 bg-light p-3 rounded-4" required>
-                    <select name="categorie" id="edit_cat" class="form-select mb-3 border-0 bg-light p-3 rounded-4" required>
-                        <option value="burgers">Burgers</option>
-                        <option value="pizza">Pizza</option>
-                        <option value="accompagnements">Accompagnements</option>
-                        <option value="boissons">Boissons</option>
-                    </select>
-                    <input type="file" name="image" class="form-control border-0 bg-light p-3 rounded-4">
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="submit" class="btn btn-success w-100 py-3 fw-bold shadow-sm" style="border-radius:15px;">METTRE À JOUR</button>
-                </div>
-            </form>
-        </div>
+            <div class="modal-body">
+                <input type="text" name="nom" id="edit_nom" class="form-control rounded-3 mb-3" required>
+                <input type="number" name="prix" id="edit_prix" class="form-control rounded-3 mb-3" required>
+                <select name="categorie" id="edit_cat" class="form-control rounded-3 mb-3" required>
+                    <option value="burgers">🍔 Burgers</option>
+                    <option value="pizza">🍕 Pizza</option>
+                    <option value="accompagnements">🍟 Accompagnements</option>
+                    <option value="tacos_chawarma">🌮 Tacos & Chawarma</option>
+                    <option value="boissons">🥤 Boissons</option>
+                    <option value="desserts">🍦 Desserts</option>
+                </select>
+                <label class="small text-muted mb-1">Changer l'image (optionnel)</label>
+                <input type="file" name="image" class="form-control rounded-3">
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold py-2">Mettre à jour</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-    // Recherche dynamique dans le tableau
     function filtrerAdmin() {
         let val = document.getElementById('adminSearch').value.toLowerCase();
-        document.querySelectorAll('tbody tr').forEach(row => {
+        document.querySelectorAll('table tbody tr').forEach(row => {
             row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
         });
     }
 
-    // Fonction pour ouvrir le modal de modification avec les données
     function ouvrirEditeur(p) {
         const form = document.getElementById('formModifier');
-        // Route Laravel : /admin/produits/{id}
         form.action = "/admin/produits/" + p.id;
-        
         document.getElementById('edit_nom').value = p.nom;
         document.getElementById('edit_prix').value = p.prix;
         document.getElementById('edit_cat').value = p.categorie;
         
-        let myModal = new bootstrap.Modal(document.getElementById('modalModifier'));
+        // Initialisation correcte de la modal Bootstrap 5
+        var myModal = new bootstrap.Modal(document.getElementById('modalModifier'));
         myModal.show();
     }
 </script>

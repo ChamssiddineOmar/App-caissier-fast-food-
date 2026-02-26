@@ -11,16 +11,36 @@ use Illuminate\Support\Facades\DB; // Ajouté pour les requêtes complexes
 class AdminController extends Controller
 {
     // --- PARTIE STATISTIQUES (NOUVEAU) ---
-  public function stats()
+ // --- PARTIE STATISTIQUES (RÉACTIVÉE) ---
+public function stats(Request $request)
 {
-    $ca_du_jour = Commande::whereDate('created_at', today())->sum('total');
-    
-    // On récupère les dernières commandes avec leurs produits
-    $dernieres_ventes = Commande::orderBy('created_at', 'desc')->take(10)->get();
+    // 1. Récupérer le mois choisi (par défaut le mois actuel)
+    $moisChoisi = $request->get('mois', date('Y-m'));
+    $annee = substr($moisChoisi, 0, 4);
+    $mois = substr($moisChoisi, 5, 2);
 
-    return view('admin.stats', compact('ca_du_jour', 'dernieres_ventes'));
+    // 2. Récupérer les vraies commandes depuis la table 'commandes'
+    $ventes = Commande::whereYear('created_at', $annee)
+                        ->whereMonth('created_at', $mois)
+                        ->latest()
+                        ->get();
+
+    // 3. Calcul du CA Mensuel réel
+    $ca_mensuel = $ventes->sum('total');
+
+    // 4. Top produits vendus (en utilisant la table 'commande_produits')
+   // Remplace cette partie dans ton AdminController.php
+$top_produits = DB::table('commande_produit') // Essaie sans le 's'
+    ->select('nom_produit', DB::raw('SUM(quantite) as total_quantite'), DB::raw('SUM(prix_unitaire * quantite) as total_revenu'))
+    ->whereYear('created_at', $annee)
+    ->whereMonth('created_at', $mois)
+    ->groupBy('nom_produit')
+    ->orderBy('total_revenu', 'desc')
+    ->limit(5)
+    ->get();
+
+    return view('admin.stats', compact('ventes', 'ca_mensuel', 'top_produits', 'moisChoisi'));
 }
-
     // --- GESTION DES PRODUITS ---
 
     public function index()
@@ -85,4 +105,15 @@ class AdminController extends Controller
 
         return redirect()->route('admin.produits')->with('success', 'Produit supprimé !');
     }
+
+    public function toggleStock($id)
+{
+    $produit = Produit::findOrFail($id);
+    $produit->en_stock = !$produit->en_stock; // On inverse l'état
+    $produit->save();
+
+    return back()->with('success', 'État du stock mis à jour');
+}
+
+
 }

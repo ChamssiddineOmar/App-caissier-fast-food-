@@ -18,7 +18,27 @@
         position: relative; 
         border: 1px solid transparent; 
     }
-    .product-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+    .product-card:hover:not(.out-of-stock) { transform: translateY(-10px); border-color: var(--primary); }
+    
+    /* Style pour la rupture de stock */
+    .product-card.out-of-stock { 
+        opacity: 0.6; 
+        cursor: not-allowed; 
+        filter: grayscale(0.5);
+    }
+    .badge-rupture {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #EE5D50;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
     .product-card img { width: 100%; height: 110px; object-fit: contain; margin-bottom: 15px; }
     .price-tag { background: #F4F7FE; color: var(--primary); border-radius: 12px; font-weight: 800; padding: 5px 15px; display: inline-block; }
 </style>
@@ -34,15 +54,19 @@
         <button class="cat-pill filter-btn" data-filter="desserts">🍦 Desserts</button>
         <button class="cat-pill filter-btn" data-filter="menus">🍱 Menus combinés</button>
     </div>
-    
-    {{-- Les boutons Stats et Nouveau ont été supprimés d'ici --}}
 </div>
 
 <div class="row row-cols-1 row-cols-md-3 row-cols-xl-4 g-4" id="grid-produits">
     @foreach($produits as $produit)
     <div class="col product-item" data-category="{{ $produit->categorie }}" data-name="{{ strtolower($produit->nom) }}">
-        {{-- Suppression des boutons de modification/suppression sur la carte --}}
-        <div class="product-card" onclick="ajouterAuPanier({{ $produit->id }}, '{{ addslashes($produit->nom) }}', {{ $produit->prix }})">
+        {{-- On ajoute la classe 'out-of-stock' et on désactive le clic si en_stock est faux --}}
+        <div class="product-card {{ !$produit->en_stock ? 'out-of-stock' : '' }}" 
+             @if($produit->en_stock) onclick="ajouterAuPanier({{ $produit->id }}, '{{ addslashes($produit->nom) }}', {{ $produit->prix }})" @endif>
+            
+            @if(!$produit->en_stock)
+                <span class="badge-rupture">Rupture</span>
+            @endif
+
             <img src="{{ $produit->image ? asset('storage/'.$produit->image) : 'https://cdn-icons-png.flaticon.com/512/1161/1161695.png' }}">
             <h5 class="fw-800 mb-1" style="font-size:15px">{{ $produit->nom }}</h5>
             <div class="price-tag">{{ number_format($produit->prix, 0, ',', ' ') }} F</div>
@@ -51,10 +75,8 @@
     @endforeach
 </div>
 
-{{-- Les Modals d'ajout et de modification ont été supprimés car ils vont dans l'Espace Patron --}}
-
 <script>
-    // Gestion du filtrage par catégorie
+    // Filtrage catégories
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -66,7 +88,7 @@
         });
     });
 
-    // Recherche dynamique (lié à l'input "main-search" du layout)
+    // Recherche dynamique
     const posSearch = document.getElementById('main-search');
     if(posSearch) {
         posSearch.addEventListener('input', (e) => {
