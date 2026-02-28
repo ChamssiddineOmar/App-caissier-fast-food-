@@ -18,22 +18,29 @@ Route::post('/commandes/store', [CommandeController::class, 'store'])->name('com
 
 
 // --- ESPACE PATRON (ACCÈS ADMIN) ---
-// On utilise le préfixe 'admin' pour regrouper toutes les pages de gestion
 Route::prefix('admin')->group(function () {
 
-    // 1. GESTION DES PRODUITS (Liste, Ajout, Modif, Suppression, Stock)
+    // 1. GESTION DES PRODUITS
     Route::get('/produits', [AdminController::class, 'index'])->name('admin.produits');
     Route::post('/produits/store', [AdminController::class, 'store'])->name('produits.store');
     Route::put('/produits/{id}', [AdminController::class, 'update'])->name('produits.update');
     Route::delete('/produits/{id}', [AdminController::class, 'destroy'])->name('produits.destroy');
     Route::post('/produits/{id}/toggle-stock', [AdminController::class, 'toggleStock'])->name('admin.produits.stock');
 
-    // 2. BILAN FINANCIER & STATISTIQUES
-    // Une SEULE route pour les stats pour éviter les conflits de filtrage
-    Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');
+    // 2. GESTION DES CAISSIERS
+    Route::get('/caissiers', [AdminController::class, 'gestionCaissiers'])->name('admin.caissiers');
+    Route::post('/caissiers/store', [AdminController::class, 'storeCaissier'])->name('admin.caissiers.store');
+    
+    // --- LA LIGNE CORRIGÉE POUR L'ERREUR TOGGLE ---
+    Route::post('/caissiers/{id}/toggle', [AdminController::class, 'toggleCaissier'])->name('admin.caissiers.toggle');
+    
+    Route::delete('/caissiers/{id}', [AdminController::class, 'destroyCaissier'])->name('admin.caissiers.destroy');
 
-    // 3. ACTIONS TECHNIQUES (AJAX)
-    // Récupère les produits d'une commande pour la fenêtre surgissante (Modal)
+    // 3. BILAN FINANCIER & STATISTIQUES
+    Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');
+    Route::get('/stats/export', [AdminController::class, 'exportStats'])->name('admin.stats.export');
+
+    // 4. ACTIONS TECHNIQUES (AJAX)
     Route::get('/commandes/{id}/details', [StatistiqueController::class, 'details'])->name('admin.commandes.details');
 
 });

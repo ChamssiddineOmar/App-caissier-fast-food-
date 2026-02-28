@@ -97,6 +97,12 @@
 </head>
 <body>
 
+    @php
+        if(!isset($caissiers)) {
+            $caissiers = \App\Models\Caissier::where('actif', true)->orderBy('nom', 'asc')->get();
+        }
+    @endphp
+
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="paymentToast" class="toast custom-toast bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex p-3">
@@ -112,17 +118,24 @@
         <div class="row g-0">
             <div class="col-md-3 sidebar-ticket">
                 <div class="ticket-header">
-                    <h3 class="fw-800 mb-0">Elite_FastFood</h3>
-                    <div class="d-flex align-items-center mt-2 no-print">
-                        <i class="fa-solid fa-user-circle me-2 text-primary"></i>
-                        <select id="select-caissier" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="changerCaissier()">
-                            <option value="Omar">Omar</option>
-                            <option value="Moindzioi">Moindzioi</option>
-                            <option value="Chamssiddine">Chamssiddine</option>
-                            <option value="Aboudou">Aboudou</option>
+                    <h3 class="fw-800 mb-0 text-primary">Elite_FastFood</h3>
+                    
+                    <div class="d-flex align-items-center mt-3 no-print p-2 bg-light rounded-3">
+                        <i class="fa-solid fa-circle-user me-2 text-primary fs-5"></i>
+                        <select id="select-caissier" class="form-select form-select-sm border-0 bg-transparent fw-bold shadow-none" onchange="changerCaissier()">
+                            @forelse($caissiers as $c)
+                                <option value="{{ $c->nom }}">{{ $c->nom }}</option>
+                            @empty
+                                <option value="Admin">Admin (Défaut)</option>
+                            @endforelse
                         </select>
                     </div>
-                    <p class="small fw-600 mb-0 mt-2">Table #Direct • <span id="nom-caissier-recu">Omar</span></p>
+                    
+                    <p class="small fw-600 mb-0 mt-2">
+                        Table #Direct • <span id="nom-caissier-recu" class="text-primary fw-800">
+                            {{ $caissiers->isNotEmpty() ? $caissiers->first()->nom : 'Admin' }}
+                        </span>
+                    </p>
                     <div id="print-date" class="small fw-bold text-muted"></div>
                 </div>
 
@@ -192,7 +205,9 @@
         let noteCommandeGlobal = "";
 
         function changerCaissier() {
-            document.getElementById('nom-caissier-recu').innerText = document.getElementById('select-caissier').value;
+            const select = document.getElementById('select-caissier');
+            const display = document.getElementById('nom-caissier-recu');
+            display.innerText = select.value;
         }
 
         function ajouterAuPanier(id, nom, prix) {
@@ -261,16 +276,13 @@
                 });
 
                 if (response.ok) {
-                    // --- AFFICHAGE DE LA NOTIFICATION ---
                     const toastEl = document.getElementById('paymentToast');
                     const toast = new bootstrap.Toast(toastEl);
                     toast.show();
 
-                    // --- IMPRESSION ---
                     document.getElementById('print-date').innerText = new Date().toLocaleString();
                     window.print();
                     
-                    // --- RESET ---
                     panier = [];
                     noteCommandeGlobal = "";
                     majAffichage();

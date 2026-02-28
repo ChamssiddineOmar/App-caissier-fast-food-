@@ -5,7 +5,7 @@
     
     @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
-            {{ session('success') }}
+            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
         </div>
     @endif
 
@@ -19,6 +19,11 @@
                 <a href="{{ route('admin.produits') }}" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-utensils me-2"></i> Gérer le Menu
                 </a>
+                
+                <a href="{{ route('admin.caissiers') }}" class="btn btn-white shadow-sm rounded-pill px-4 fw-bold text-info border bg-white">
+                    <i class="fa-solid fa-users-gear me-2"></i> Gérer le Personnel
+                </a>
+
                 <a href="{{ route('accueil') }}" class="btn btn-outline-dark shadow-sm rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-cash-register me-2"></i> Interface Caisse
                 </a>
@@ -98,7 +103,7 @@
 
 <div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0">
+        <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow-lg">
             @csrf
             <div class="modal-header border-0">
                 <h5 class="fw-bold">Nouveau Produit</h5>
@@ -127,7 +132,7 @@
 
 <div class="modal fade" id="modalModifier" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="formModifier" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0">
+        <form id="formModifier" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow-lg">
             @csrf @method('PUT')
             <div class="modal-header border-0">
                 <h5 class="fw-bold">Modifier le produit</h5>
@@ -164,12 +169,15 @@
 
     function ouvrirEditeur(p) {
         const form = document.getElementById('formModifier');
+        // On construit l'URL pour la mise à jour
         form.action = "/admin/produits/" + p.id;
+        
+        // On remplit les champs avec les données du produit
         document.getElementById('edit_nom').value = p.nom;
         document.getElementById('edit_prix').value = p.prix;
         document.getElementById('edit_cat').value = p.categorie;
         
-        // Initialisation correcte de la modal Bootstrap 5
+        // On affiche la modal
         var myModal = new bootstrap.Modal(document.getElementById('modalModifier'));
         myModal.show();
     }

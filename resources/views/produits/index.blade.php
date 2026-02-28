@@ -20,7 +20,6 @@
     }
     .product-card:hover:not(.out-of-stock) { transform: translateY(-10px); border-color: var(--primary); }
     
-    /* Style pour la rupture de stock */
     .product-card.out-of-stock { 
         opacity: 0.6; 
         cursor: not-allowed; 
@@ -52,14 +51,12 @@
         <button class="cat-pill filter-btn" data-filter="tacos_chawarma">🌮 Tacos & Chawarma</button>
         <button class="cat-pill filter-btn" data-filter="boissons">🥤 Boissons</button>
         <button class="cat-pill filter-btn" data-filter="desserts">🍦 Desserts</button>
-        <button class="cat-pill filter-btn" data-filter="menus">🍱 Menus combinés</button>
     </div>
 </div>
 
 <div class="row row-cols-1 row-cols-md-3 row-cols-xl-4 g-4" id="grid-produits">
     @foreach($produits as $produit)
     <div class="col product-item" data-category="{{ $produit->categorie }}" data-name="{{ strtolower($produit->nom) }}">
-        {{-- On ajoute la classe 'out-of-stock' et on désactive le clic si en_stock est faux --}}
         <div class="product-card {{ !$produit->en_stock ? 'out-of-stock' : '' }}" 
              @if($produit->en_stock) onclick="ajouterAuPanier({{ $produit->id }}, '{{ addslashes($produit->nom) }}', {{ $produit->prix }})" @endif>
             
@@ -98,6 +95,16 @@
                 item.style.display = name.includes(val) ? 'block' : 'none';
             });
         });
+    }
+
+    // Fonction de validation avant commande (Optionnel mais recommandé)
+    function validerCommande() {
+        const caissier = document.getElementById('caissier_select').value;
+        if(!caissier) {
+            alert("Veuillez sélectionner un caissier avant de valider la vente !");
+            return false;
+        }
+        return true;
     }
 </script>
 @endsection
