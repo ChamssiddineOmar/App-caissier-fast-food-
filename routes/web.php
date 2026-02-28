@@ -30,15 +30,13 @@ Route::prefix('admin')->group(function () {
     // 2. GESTION DES CAISSIERS
     Route::get('/caissiers', [AdminController::class, 'gestionCaissiers'])->name('admin.caissiers');
     Route::post('/caissiers/store', [AdminController::class, 'storeCaissier'])->name('admin.caissiers.store');
-    
-    // --- LA LIGNE CORRIGÉE POUR L'ERREUR TOGGLE ---
     Route::post('/caissiers/{id}/toggle', [AdminController::class, 'toggleCaissier'])->name('admin.caissiers.toggle');
-    
     Route::delete('/caissiers/{id}', [AdminController::class, 'destroyCaissier'])->name('admin.caissiers.destroy');
 
-    // 3. BILAN FINANCIER & STATISTIQUES
-    Route::get('/stats', [AdminController::class, 'stats'])->name('admin.stats');
-    Route::get('/stats/export', [AdminController::class, 'exportStats'])->name('admin.stats.export');
+    // 3. BILAN FINANCIER & STATISTIQUES (MISE À JOUR ICI)
+    // On pointe maintenant vers StatistiqueController pour éviter l'erreur de variable manquante
+    Route::get('/stats', [StatistiqueController::class, 'index'])->name('admin.stats');
+    Route::get('/stats/export', [StatistiqueController::class, 'exportStats'])->name('admin.stats.export');
 
     // 4. ACTIONS TECHNIQUES (AJAX)
     Route::get('/commandes/{id}/details', [StatistiqueController::class, 'details'])->name('admin.commandes.details');

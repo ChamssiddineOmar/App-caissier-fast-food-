@@ -9,7 +9,8 @@
         </div>
     @endif
 
-    <div class="d-flex justify-content-between align-items-start mb-4">
+    {{-- ENTÊTE --}}
+    <div class="d-flex justify-content-between align-items-start mb-5">
         <div class="admin-nav">
             <h2 class="fw-800 mb-3" style="color: var(--dark-text);">Tableau de Bord du Patron</h2>
             <div class="d-flex flex-wrap gap-2">
@@ -19,11 +20,9 @@
                 <a href="{{ route('admin.produits') }}" class="btn btn-primary shadow-sm rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-utensils me-2"></i> Gérer le Menu
                 </a>
-                
                 <a href="{{ route('admin.caissiers') }}" class="btn btn-white shadow-sm rounded-pill px-4 fw-bold text-info border bg-white">
                     <i class="fa-solid fa-users-gear me-2"></i> Gérer le Personnel
                 </a>
-
                 <a href="{{ route('accueil') }}" class="btn btn-outline-dark shadow-sm rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-cash-register me-2"></i> Interface Caisse
                 </a>
@@ -35,19 +34,21 @@
         </button>
     </div>
 
-    <hr class="mb-5 opacity-25">
-
-    <div class="row mb-5 g-4">
-        <div class="col-md-12"> 
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-magnifying-glass me-2"></i>Rechercher un plat</h5>
+    {{-- RECHERCHE --}}
+    <div class="row mb-4 g-4 align-items-center">
+        <div class="col-md-8"> 
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-list me-2"></i>Liste des Produits</h5>
+        </div>
+        <div class="col-md-4">
             <div class="position-relative">
                 <i class="fa-solid fa-magnifying-glass position-absolute" style="left: 15px; top: 12px; color: var(--light-text);"></i>
                 <input type="text" id="adminSearch" class="form-control border-0 shadow-sm ps-5 py-2 rounded-pill" 
-                       placeholder="Plat ou catégorie..." onkeyup="filtrerAdmin()">
+                       placeholder="Rechercher un plat..." onkeyup="filtrerAdmin()">
             </div>
         </div>
     </div>
 
+    {{-- TABLEAU --}}
     <div class="card border-0 shadow-sm rounded-5 overflow-hidden">
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
@@ -101,6 +102,7 @@
     </div>
 </div>
 
+{{-- MODAL AJOUT --}}
 <div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow-lg">
@@ -124,12 +126,13 @@
                 <input type="file" name="image" class="form-control rounded-3">
             </div>
             <div class="modal-footer border-0">
-                <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold py-2">Enregistrer le produit</button>
+                <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold py-2">Enregistrer</button>
             </div>
         </form>
     </div>
 </div>
 
+{{-- MODAL MODIFIER --}}
 <div class="modal fade" id="modalModifier" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form id="formModifier" method="POST" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow-lg">
@@ -149,7 +152,6 @@
                     <option value="boissons">🥤 Boissons</option>
                     <option value="desserts">🍦 Desserts</option>
                 </select>
-                <label class="small text-muted mb-1">Changer l'image (optionnel)</label>
                 <input type="file" name="image" class="form-control rounded-3">
             </div>
             <div class="modal-footer border-0">
@@ -169,15 +171,10 @@
 
     function ouvrirEditeur(p) {
         const form = document.getElementById('formModifier');
-        // On construit l'URL pour la mise à jour
         form.action = "/admin/produits/" + p.id;
-        
-        // On remplit les champs avec les données du produit
         document.getElementById('edit_nom').value = p.nom;
         document.getElementById('edit_prix').value = p.prix;
         document.getElementById('edit_cat').value = p.categorie;
-        
-        // On affiche la modal
         var myModal = new bootstrap.Modal(document.getElementById('modalModifier'));
         myModal.show();
     }

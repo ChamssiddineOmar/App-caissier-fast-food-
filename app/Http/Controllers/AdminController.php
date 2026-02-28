@@ -11,33 +11,25 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    // --- PARTIE STATISTIQUES ---
-    public function stats(Request $request)
+    // --- GESTION DES PRODUITS (ACCUEIL ADMIN) ---
+    public function index()
     {
-        $moisChoisi = $request->get('mois', date('Y-m'));
-        $annee = substr($moisChoisi, 0, 4);
-        $mois = substr($moisChoisi, 5, 2);
+        $produits = Produit::all(); 
 
-        $ventes = Commande::whereYear('created_at', $annee)
-                            ->whereMonth('created_at', $mois)
-                            ->latest()
-                            ->get();
+        // Calcul des données pour les 3 widgets du haut
+        $ventes_totales = Commande::sum('total');
+        $total_sur_place = Commande::where('type', 'Sur Place')->count();
+        $total_emporter = Commande::where('type', 'À Emporter')->count();
 
-        $ca_mensuel = $ventes->sum('total');
-
-        $top_produits = DB::table('commande_produit')
-            ->select('nom_produit', DB::raw('SUM(quantite) as total_quantite'), DB::raw('SUM(prix_unitaire * quantite) as total_revenu'))
-            ->whereYear('created_at', $annee)
-            ->whereMonth('created_at', $mois)
-            ->groupBy('nom_produit')
-            ->orderBy('total_revenu', 'desc')
-            ->limit(5)
-            ->get();
-
-        return view('admin.stats', compact('ventes', 'ca_mensuel', 'top_produits', 'moisChoisi'));
+        return view('admin.produits', compact(
+            'produits', 
+            'ventes_totales', 
+            'total_sur_place', 
+            'total_emporter'
+        ));
     }
 
-    // --- GESTION DES CAISSIERS (MISE À JOUR) ---
+    // --- GESTION DES CAISSIERS ---
     
     // 1. Affiche la page de gestion au patron
     public function gestionCaissiers()
@@ -55,25 +47,21 @@ class AdminController extends Controller
 
         Caissier::create([
             'nom' => $request->nom,
-            'actif' => true // Par défaut, il apparaît à la caisse
+            'actif' => true 
         ]);
 
         return back()->with('success', 'Nouveau caissier enregistré !');
     }
 
-    // 3. Le patron SUPPRIME ou DÉSACTIVE un caissier
+    // 3. Le patron SUPPRIME un caissier
     public function destroyCaissier($id)
     {
         $caissier = Caissier::findOrFail($id);
-        
-        // On vérifie si ce caissier a déjà travaillé (pour ne pas corrompre les stats)
-        // Si tu n'as pas encore lié les commandes aux caissiers, delete() suffit
         $caissier->delete();
-
         return back()->with('success', 'Caissier supprimé avec succès !');
     }
 
-    // 4. Option : Activer/Désactiver (pour cacher un caissier sans le supprimer)
+    // 4. Activer/Désactiver un caissier
     public function toggleCaissier($id)
     {
         $caissier = Caissier::findOrFail($id);
@@ -83,13 +71,7 @@ class AdminController extends Controller
         return back()->with('success', 'Disponibilité du caissier mise à jour');
     }
 
-    // --- GESTION DES PRODUITS ---
-
-    public function index()
-    {
-        $produits = Produit::all(); 
-        return view('admin.produits', compact('produits'));
-    }
+    // --- ACTIONS SUR LES PRODUITS ---
 
     public function store(Request $request)
     {
@@ -156,4 +138,9 @@ class AdminController extends Controller
 
         return back()->with('success', 'État du stock mis à jour');
     }
+
+    /**
+     * Note: La méthode stats() a été retirée d'ici car elle est désormais 
+     * gérée par StatistiqueController pour plus de clarté.
+     */
 }

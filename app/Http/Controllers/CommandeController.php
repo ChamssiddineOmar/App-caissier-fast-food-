@@ -14,15 +14,17 @@ class CommandeController extends Controller
         $request->validate([
             'total' => 'required|numeric',
             'caissier' => 'required|string',
+            'type' => 'required|string', // NOUVEAU : Validation du type (Sur Place / Emporter)
             'panier' => 'required|array'
         ]);
 
         try {
             DB::transaction(function () use ($request) {
-                // 1. Création de la commande
+                // 1. Création de la commande avec le type
                 $commande = Commande::create([
                     'total' => $request->total,
                     'caissier' => $request->caissier,
+                    'type' => $request->type, // NOUVEAU : Enregistre le mode de consommation
                     'statut' => 'payé'
                 ]);
 
@@ -30,7 +32,7 @@ class CommandeController extends Controller
                 foreach ($request->panier as $item) {
                     CommandeProduit::create([
                         'commande_id' => $commande->id,
-                        'produit_id'  => $item['id'], // AJOUTÉ : Très important pour les stats
+                        'produit_id'  => $item['id'],
                         'nom_produit' => $item['nom'],
                         'quantite'    => $item['qte'],
                         'prix_unitaire' => $item['prix']

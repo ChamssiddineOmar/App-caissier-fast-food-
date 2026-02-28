@@ -14,11 +14,9 @@ class StatistiqueController extends Controller
     {
         // 1. Récupération du mois (format Y-m) depuis la requête ou mois actuel
         $moisFiltre = $request->get('mois', date('Y-m'));
-        
-        // On crée un objet Carbon pour manipuler facilement l'année et le mois
         $date = Carbon::parse($moisFiltre);
 
-        // 2. Chiffre d'affaires du jour (indépendant du filtre pour garder un œil sur aujourd'hui)
+        // 2. Chiffre d'affaires du jour
         $ca_du_jour = Commande::whereDate('created_at', Carbon::today())->sum('total');
 
         // 3. Récupération des ventes du mois sélectionné
@@ -30,7 +28,7 @@ class StatistiqueController extends Controller
         // 4. Calcul du Chiffre d'Affaires Mensuel
         $ca_mensuel = $ventes->sum('total');
 
-        // 5. Statistiques des Top Produits pour ce mois précis
+        // 5. Statistiques des Top Produits pour ce mois
         $top_produits = CommandeProduit::select(
                 'nom_produit', 
                 DB::raw('SUM(quantite) as total_quantite'), 
@@ -43,7 +41,7 @@ class StatistiqueController extends Controller
             ->limit(5)
             ->get();
 
-        // 6. Envoi des données à la vue
+        // 6. Envoi des données à la vue (on a retiré les totaux par type)
         return view('admin.stats', compact(
             'ventes', 
             'ca_mensuel', 
@@ -53,15 +51,23 @@ class StatistiqueController extends Controller
     }
 
     /**
-     * Récupère les détails d'une commande via AJAX pour la Modal
+     * Récupère les détails d'une commande (incluant le caissier)
      */
     public function details($id)
     {
         try {
-            $details = CommandeProduit::where('commande_id', $id)->get();
-            return response()->json($details);
+            // On récupère la commande avec ses produits
+            $commande = Commande::with('produits')->findOrFail($id);
+            
+            return response()->json([
+                'id' => $commande->id,
+                'caissier' => $commande->caissier, // On garde bien le nom du caissier
+                'total' => $commande->total,
+                'date' => $commande->created_at->format('d/m/Y à H:i'),
+                'produits' => $commande->produits
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Erreur lors du chargement : ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Commande introuvable'], 404);
         }
     }
 }

@@ -63,6 +63,12 @@
         .btn-save { background: #E9EDFF; color: var(--primary); }
         .btn-notes { background: #F4F7FE; color: var(--dark-text); }
 
+        /* Style des boutons de type de commande */
+        .btn-check:checked + .btn-outline-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
         /* Notification Style */
         .toast-container { z-index: 10000; }
         .custom-toast { 
@@ -88,7 +94,7 @@
                 position: absolute; left: 0; top: 0; width: 80mm; 
                 box-shadow: none !important; border: none !important;
             }
-            .no-print, .btn-pay-container, .action-grid, .admin-section, select, .fa-circle-minus, .toast-container {
+            .no-print, .btn-pay-container, .action-grid, .admin-section, select, .fa-circle-minus, .toast-container, .type-selector-area {
                 display: none !important;
             }
             .ticket-items { overflow: visible; }
@@ -132,7 +138,9 @@
                     </div>
                     
                     <p class="small fw-600 mb-0 mt-2">
-                        Table #Direct • <span id="nom-caissier-recu" class="text-primary fw-800">
+                        <span id="type-badge-recu" class="badge bg-primary me-1">SUR PLACE</span>
+                        <span id="table-label">Table #Direct</span> • 
+                        <span id="nom-caissier-recu" class="text-primary fw-800">
                             {{ $caissiers->isNotEmpty() ? $caissiers->first()->nom : 'Admin' }}
                         </span>
                     </p>
@@ -147,6 +155,20 @@
                 </div>
 
                 <div class="ticket-footer">
+                    <div class="mb-3 no-print type-selector-area">
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="type_commande" id="radio_sur_place" value="Sur Place" checked onchange="majTypeCommande()">
+                            <label class="btn btn-outline-primary rounded-start-4 fw-bold py-2" for="radio_sur_place">
+                                <i class="fa-solid fa-utensils me-1"></i> Place
+                            </label>
+
+                            <input type="radio" class="btn-check" name="type_commande" id="radio_emporter" value="À Emporter" onchange="majTypeCommande()">
+                            <label class="btn btn-outline-primary rounded-end-4 fw-bold py-2" for="radio_emporter">
+                                <i class="fa-solid fa-bag-shopping me-1"></i> Emporter
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-muted fw-600">TOTAL</span>
                         <h2 class="fw-800 text-primary mb-0" id="total-display">0 F</h2>
@@ -203,6 +225,23 @@
     <script>
         let panier = [];
         let noteCommandeGlobal = "";
+        let modeCommande = "Sur Place";
+
+        function majTypeCommande() {
+            modeCommande = document.querySelector('input[name="type_commande"]:checked').value;
+            const badge = document.getElementById('type-badge-recu');
+            const tableLabel = document.getElementById('table-label');
+            
+            badge.innerText = modeCommande.toUpperCase();
+            
+            if (modeCommande === "À Emporter") {
+                badge.className = "badge bg-danger me-1";
+                tableLabel.classList.add('d-none');
+            } else {
+                badge.className = "badge bg-primary me-1";
+                tableLabel.classList.remove('d-none');
+            }
+        }
 
         function changerCaissier() {
             const select = document.getElementById('select-caissier');
@@ -271,6 +310,7 @@
                     body: JSON.stringify({
                         total: panier.reduce((acc, p) => acc + (p.prix * p.qte), 0),
                         caissier: document.getElementById('select-caissier').value,
+                        type: modeCommande,
                         panier: panier
                     })
                 });
